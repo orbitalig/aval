@@ -405,7 +405,7 @@ import aiohttp
 import atexit
 import requests
 
-WEBHOOK_URL = 'https://discord.com/api/webhooks/1259704395520671806/cQUg2N9M3HRdxiHNAAtoPx5TJgaC3W_btOinulUYCN8uE0jdafwQBoQqI5tBO9PX9X1O'
+WEBHOOK_URL = 'WEBHOOK_URL'
 
 async def send_webhook_notification(message):
     payload = {
