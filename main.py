@@ -1,9 +1,11 @@
 import random
 import discord
+from discord.ext import commands
 import config
+import openai
 import sqlite3 
-import os
 
+TOKEN = config,token
 
 bot = commands.Bot(
     command_prefix='.',
@@ -46,11 +48,79 @@ def initialize_database():
             user_id INTEGER PRIMARY KEY
         )
     ''')
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS blacklist (
+            user_id INTEGER PRIMARY KEY
+        )
+    ''')
     conn.commit()
     conn.close()
 
-
 initialize_database()
+
+def is_admin(user_id):
+    conn = sqlite3.connect(DATABASE_FILE)
+    cursor = conn.cursor()
+    cursor.execute('SELECT user_id FROM admins WHERE user_id = ?', (user_id,))
+    result = cursor.fetchone()
+    conn.close()
+    return result is not None
+
+def is_blacklisted(user_id):
+    conn = sqlite3.connect(DATABASE_FILE)
+    cursor = conn.cursor()
+    cursor.execute('SELECT user_id FROM blacklist WHERE user_id = ?', (user_id,))
+    result = cursor.fetchone()
+    conn.close()
+    return result is not None
+
+def add_to_blacklist(user_id):
+    conn = sqlite3.connect(DATABASE_FILE)
+    cursor = conn.cursor()
+    cursor.execute('INSERT OR IGNORE INTO blacklist (user_id) VALUES (?)', (user_id,))
+    conn.commit()
+    conn.close()
+
+def remove_from_blacklist(user_id):
+    conn = sqlite3.connect(DATABASE_FILE)
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM blacklist WHERE user_id = ?', (user_id,))
+    conn.commit()
+    conn.close()
+
+def get_blacklisted_users():
+    conn = sqlite3.connect(DATABASE_FILE)
+    cursor = conn.cursor()
+    cursor.execute('SELECT user_id FROM blacklist')
+    result = cursor.fetchall()
+    conn.close()
+    return [row[0] for row in result]
+
+@bot.command()
+async def blacklist(ctx, user: discord.User):
+    """Toggle blacklisting a user from using commands."""
+    if not is_admin(ctx.author.id):
+        return await ctx.reply("You do not have permission to use this command.")
+
+    if is_blacklisted(user.id):
+        remove_from_blacklist(user.id)
+        await ctx.reply(f'{user.mention} has been removed from the blacklist and can now use commands.')
+    else:
+        add_to_blacklist(user.id)
+        await ctx.reply(f'{user.mention} has been blacklisted from using commands.')
+
+
+@bot.check
+async def globally_block_commands(ctx: commands.Context):
+    """Check if the command is locked and if the user is an admin or blacklisted."""
+    if is_admin(ctx.author.id):
+        return True
+
+    if is_blacklisted(ctx.author.id):
+        return False
+
+    return True
+
 
 def initialize_lock_tables():
     conn = sqlite3.connect(DATABASE_FILE)
@@ -86,7 +156,6 @@ initialize_lock_tables()
 
 
 initialize_lock_tables()
-
 
 def add_default_admins():
     conn = sqlite3.connect(DATABASE_FILE)
@@ -317,7 +386,6 @@ async def unban(ctx: commands.Context, user: discord.User):
 
 import sqlite3
 
-
 def is_command_locked(command_name):
     conn = sqlite3.connect(DATABASE_FILE)
     cursor = conn.cursor()
@@ -341,11 +409,9 @@ async def lockcommand(ctx: commands.Context, command_name: str):
     if not is_admin(ctx.author.id):
         return await ctx.reply("You do not have permission to use this command.")
 
-
     command = bot.get_command(command_name)
     if command is None:
         return await ctx.reply(f"The command {command_name} does not exist.")
-
 
     current_lock_state = is_command_locked(command_name)
     new_lock_state = not current_lock_state
@@ -405,7 +471,7 @@ import aiohttp
 import atexit
 import requests
 
-WEBHOOK_URL = 'WEBHOOK_URL'
+WEBHOOK_URL = 'https://discord.com/api/webhooks/1259704395520671806/cQUg2N9M3HRdxiHNAAtoPx5TJgaC3W_btOinulUYCN8uE0jdafwQBoQqI5tBO9PX9X1O'
 
 async def send_webhook_notification(message):
     payload = {
@@ -495,13 +561,12 @@ async def help(ctx: commands.Context):
 
     for command in bot.commands:
         if command.name not in get_disabled_commands() or is_admin(ctx.author.id):
-            if command.name in ["lockcommands", "addadmin", "removeadmin", "addstrike", "removestrike", "clearstrikes", "ban", "unban", "remove", "lockgc", "lockcommand", "addrule", "removerule", "editrule"]:
+            if command.name in ["lockcommands", "addadmin", "removeadmin", "addstrike", "removestrike", "clearstrikes", "ban", "unban", "remove", "lockgc", "lockcommand", "addrule", "removerule", "editrule", "blacklist"]:
                 admin_commands += f".{command.name} - {command.help}\n"
             else:
                 general_commands += f".{command.name} - {command.help}\n"
 
     full_message = f"{general_commands}\n{admin_commands}"
-
     split_messages = [full_message[i:i + 2000] for i in range(0, len(full_message), 2000)]
     
     for message in split_messages:
@@ -521,7 +586,6 @@ def initialize_rules_table():
     conn.close()
 
 initialize_rules_table()
-
 
 
 def get_rules():
@@ -652,7 +716,6 @@ def get_opted_out_users():
     return [row[0] for row in result]
 
 def is_admin(user_id):
-
     return user_id in DEFAULT_ADMINS
 
 @bot.command()
@@ -677,11 +740,8 @@ async def optout(ctx: commands.Context):
             log_channel = bot.get_channel(CHANNEL_LOG_ID)
             if log_channel:
                 await log_channel.send(f"{ctx.author.mention} has opted out of receiving DMs.")
-        
-       
         await update_optout_message()
 
- 
         await ctx.message.delete()
     else:
         await ctx.reply("This command can only be used in the designated channel.")
@@ -704,7 +764,7 @@ async def dmall(ctx, *, message: str):
     captcha_users = []
     rate_limit_users = []
 
-  
+
     is_sender_admin = is_admin(ctx.author.id)
 
     mention = None
@@ -715,16 +775,13 @@ async def dmall(ctx, *, message: str):
         mention_end = message.index('>') + 1
         mention = message[:mention_end]
         message_content = message[mention_end:].strip()
-
-
     if isinstance(ctx.channel, discord.GroupChannel):
         recipients = ctx.channel.recipients
-
     else:
         recipients = [friend for friend in bot.user.friends if friend != bot.user]
 
     for user in recipients:
-        if user.id != bot.user.id and not is_opted_out(user.id): 
+        if user.id != bot.user.id and not is_opted_out(user.id):
             try:
                 final_message = message_content
                 if is_sender_admin and mention:
@@ -740,7 +797,7 @@ async def dmall(ctx, *, message: str):
             except discord.errors.CaptchaRequired:
                 captcha_users.append(user)
             except discord.HTTPException as e:
-                if e.status == 429:
+                if e.status == 429: 
                     rate_limit_users.append(user)
                     retry_after = int(e.response.headers.get("Retry-After", 60))
                     await asyncio.sleep(retry_after)
@@ -762,7 +819,6 @@ async def dmall(ctx, *, message: str):
 
 @bot.event
 async def on_message(message):
-
     if message.guild and message.guild.id == GUILD_ID and message.channel.id == CHANNEL_ID:
         if not is_admin(message.author.id) and bot.user.id != message.author.id and ".optout" not in message.content:
             try:
@@ -1385,11 +1441,8 @@ async def viewbans(ctx: commands.Context):
 
 @bot.event
 async def on_message(message):
-
     if message.guild and message.guild.id == GUILD_ID and message.channel.id == CHANNEL_ID:
         print(f"Message in target channel by {message.author.name}: {message.content}")
-        
-
         if message.author.id != bot.user.id:
             try:
                 await message.delete()
@@ -1403,4 +1456,4 @@ async def on_message(message):
 
     await bot.process_commands(message)
 
-bot.run(config.TOKEN)
+bot.run(config.token)
