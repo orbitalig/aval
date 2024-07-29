@@ -1492,6 +1492,12 @@ async def viewbans(ctx: commands.Context):
     banned_list = "\n".join([f"<@{user_id}>" for user_id in banned_users])
     await ctx.reply(f"**Banned Users:**\n{banned_list}")
 
+import requests
+@bot.command()
+async def cat(ctx):
+    cat = requests.get("https://api.thecatapi.com/v1/images/search?limit=1").json()[0]["url"]
+    await ctx.reply(cat)
+
 @bot.event
 async def on_message(message):
     if message.guild and message.guild.id == GUILD_ID and message.channel.id == CHANNEL_ID:
