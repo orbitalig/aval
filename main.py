@@ -3,7 +3,7 @@ import discord
 from discord.ext import commands
 import config
 import openai
-import sqlite3 
+import sqlite3
 
 TOKEN = config,token
 
@@ -1232,11 +1232,64 @@ async def riddle(ctx: commands.Context):
         return await ctx.reply("Commands are currently locked by an admin.")
     
     riddles = {
-        "What has keys but can't open locks?": "Piano",
-        "I speak without a mouth and hear without ears. I have no body, but I come alive with the wind. What am I?": "Echo",
-        "What can travel around the world while staying in a corner?": "Stamp",
-        "What gets wetter as it dries?": "Towel",
-        "What has many teeth but can't bite?": "Comb"
+    "What has keys but can't open locks?": "Piano",
+    "I speak without a mouth and hear without ears. I have no body, but I come alive with the wind. What am I?": "Echo",
+    "What can travel around the world while staying in a corner?": "Stamp",
+    "What gets wetter as it dries?": "Towel",
+    "What has many teeth but can't bite?": "Comb",
+    "I’m not alive, but I can grow. I don’t have lungs, but I need air. I don’t have a mouth, but water kills me. What am I?": "Fire",
+    "What comes down but never goes up?": "Rain",
+    "I can be cracked, made, told, and played. What am I?": "Joke",
+    "What has a head and a tail but no body?": "Coin",
+    "What has hands but can’t clap?": "Clock",
+    "What has a bed but doesn’t sleep?": "River",
+    "What has a face and two hands but no arms or legs?": "Clock",
+    "What can be broken but never held?": "Promise",
+    "What has many keys but can’t open a single door?": "Piano",
+    "What is so fragile that saying its name breaks it?": "Silence",
+    "What has cities, but no houses; forests, but no trees; and rivers, but no water?": "Map",
+    "What has an eye but cannot see?": "Needle",
+    "What is always in front of you but can’t be seen?": "Future",
+    "What goes up but never comes down?": "Age",
+    "What can travel around the world while staying in a corner?": "Stamp",
+    "What has a neck but no head?": "Bottle",
+    "What begins with T, ends with T, and has T in it?": "Teapot",
+    "What has a thumb and four fingers but is not alive?": "Glove",
+    "What has a bark but no bite?": "Tree",
+    "What is black when you buy it, red when you use it, and gray when you throw it away?": "Charcoal",
+    "What has a head, a tail, is brown, and has no legs?": "Penny",
+    "What can you hold in your left hand but not in your right?": "Your right hand",
+    "What can be heard but not seen and can be spoken but not touched?": "Voice",
+    "What gets bigger the more you take away from it?": "Hole",
+    "What is full of holes but still holds water?": "Sponge",
+    "What has one eye but can’t see?": "Needle",
+    "What has a head and a tail but no body?": "Coin",
+    "What has keys but can’t open locks?": "Piano",
+    "What has a bed but doesn’t sleep?": "River",
+    "What can be cracked, made, told, and played?": "Joke",
+    "What has hands but can’t clap?": "Clock",
+    "What has an end but no beginning, a home but no family, and a space but no room?": "Letter",
+    "What has to be broken before you can use it?": "Egg",
+    "What has a neck but no head?": "Bottle",
+    "What can you catch but not throw?": "Cold",
+    "What can be found in the corner but can never be cornered?": "Stamp",
+    "What has a face and two hands but no arms or legs?": "Clock",
+    "What is light as a feather, yet even the world’s strongest man couldn’t hold it for much longer than a minute?": "Breath",
+    "What is always coming but never arrives?": "Tomorrow",
+    "What gets wetter as it dries?": "Towel",
+    "What can you break without touching it?": "Promise",
+    "What has four legs but only one foot?": "Bed",
+    "What has a ring but no finger?": "Telephone",
+    "What has a thumb and four fingers but is not alive?": "Glove",
+    "What starts with a T, ends with a T, and is full of T?": "Teapot",
+    "What can run but never walks, has a bed but never sleeps, and has a mouth but never eats?": "River",
+    "What has a face, hands, and a body but no legs or arms?": "Clock",
+    "What has a tail and a head but no body?": "Coin",
+    "What has keys but can’t open locks?": "Piano",
+    "What has a thumb and four fingers but is not alive?": "Glove",
+    "What has a bed but does not sleep?": "River",
+    "What is always in front of you but can’t be seen?": "Future",
+    "What has cities but no houses, forests but no trees, and rivers but no water?": "Map"
     }
     
     question, answer = random.choice(list(riddles.items()))
