@@ -548,7 +548,10 @@ async def remove(ctx: commands.Context, *, user: discord.User):
     except discord.HTTPException:
         pass
 
-
+@bot.command()
+async def kanyequote(ctx):
+    kanyequote = requests.get("https://api.kanye.rest/").json()[0]["url"]
+    await ctx.reply(kanyequote)
 
 @bot.command()
 async def help(ctx: commands.Context):
